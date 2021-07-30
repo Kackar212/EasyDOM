@@ -1,0 +1,25 @@
+{
+  "name": "quiz",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start:dev": "webpack serve",
+    "start:prod": "webpack --mode production"
+  },
+  "author": "Kacper Karpien",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.14.8",
+    "@babel/preset-env": "^7.14.8",
+    "@babel/runtime": "^7.14.8",
+    "@webpack-cli/serve": "^1.5.1",
+    "babel-loader": "^8.1.0",
+    "prettier": "2.2.1",
+    "prettier-webpack-plugin": "^1.2.0",
+    "webpack": "^4.44.2",
+    "webpack-cli": "^4.3.12",
+    "webpack-dev-server": "^3.11.0"
+  }
+}
