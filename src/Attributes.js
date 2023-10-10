@@ -3,7 +3,7 @@ import {
   transformCssObjectToString,
   transformCssStringToObject,
 } from "./helpers";
-import { is } from "./utils";
+import { is, isObject } from "./utils";
 
 const rnothtmlwhite = /[^\x20\t\r\n\f]+/g;
 
@@ -73,7 +73,7 @@ function attr(attrs, attrValue = undefined) {
     return this.getAttr(attrs);
   }
 
-  if (is(attrs, "object") && attrs !== null) {
+  if (isObject(attrs)) {
     Object.entries(attrs).forEach(([attrName, value]) => {
       __each((item) => item.setAttribute(attrName, value));
     });
@@ -124,7 +124,7 @@ function getAttr(attrName, as = String) {
 function css(styles, append = false) {
   if (is(styles, "undefined")) {
     const style = this.getAttr("style") || "";
-    const styles = {
+    return {
       style,
       styleObject: transformCssStringToObject(style),
 
@@ -132,8 +132,6 @@ function css(styles, append = false) {
         return style;
       },
     };
-
-    return styles;
   }
 
   let cssText = styles;
@@ -155,31 +153,57 @@ function css(styles, append = false) {
   return this.attr("style", cssText);
 }
 
-function prop(property, value) {
-  const { __each } = this;
-  if (!is(value, "undefined")) {
-    return __each((item) => {
-      item[property] = value;
-    });
+function setPropsByObject(properties, elements) {
+  let index = 0;
+  for (const element of elements) {
+    for (const property in properties) {
+      if (!properties.hasOwnProperty(property)) continue;
+
+      const propertyValue = properties[property];
+      element[property] = is(propertyValue, "function")
+        ? propertyValue(element[property], element, index)
+        : propertyValue;
+    }
+
+    index++;
   }
 
-  const firstElement = this.getFirst() || {};
+  return this;
+}
 
+function getPropValue(property, firstElement) {
   return firstElement[property];
 }
 
-function props(properties, value) {
-  properties = toArray(properties);
-  if (!properties.length) return this;
-  if (!is(value, "undefined")) {
-    return properties.forEach((property) => setProperty(property, value, this));
+function setPropByFunction(property, callback, elements) {
+  let index = 0;
+
+  for (const element of elements) {
+    element[property] = callback(element[property], element, index++);
   }
 
-  return this.map((element) =>
-    properties.map((property) => {
-      return element.prop(property);
-    })
-  );
+  return this;
+}
+
+function prop(property, value = undefined) {
+  const { __each } = this;
+  if (isObject(property)) {
+    return setPropsByObject(property, this.get());
+  }
+
+  if (is(value, "undefined")) {
+    return getPropValue(property, this.getFirst());
+  }
+
+  if (is(value, "function")) {
+    return setPropByFunction(property, value, this.get());
+  }
+
+  __each((item) => {
+    item[property] = value;
+  });
+
+  return this;
 }
 
 function data(
@@ -218,6 +242,6 @@ export {
   getAttr,
   css,
   prop,
-  props,
+  // props,
   data,
 };

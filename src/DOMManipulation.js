@@ -23,7 +23,8 @@ function append(elements, clone = false) {
 }
 
 function appendTo(container, clone = false) {
-  this.__each((node) => insert(container, node, undefined, clone));
+  const fragment = this.getAsFragment();
+  insert(container, fragment, undefined, clone);
 
   return this;
 }

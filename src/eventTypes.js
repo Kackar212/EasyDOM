@@ -3,7 +3,6 @@ const eventTypes = new Map();
 eventTypes.set(
   [
     "click",
-    "click",
     "contextmenu",
     "dblclick",
     "mousedown",

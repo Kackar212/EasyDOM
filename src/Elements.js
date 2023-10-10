@@ -180,8 +180,6 @@ function includes(item) {
   return nodes.every((node) => elements.includes(node));
 }
 
-window.formControls = formControls;
-
 export {
   queryAll,
   query,
@@ -197,5 +195,6 @@ export {
   closest,
   slice,
   repeat,
+  formControls,
   includes,
 };

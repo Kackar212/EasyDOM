@@ -19,15 +19,7 @@ function attachEvent(
     const ev = {
       eventName,
       callback: (e) => {
-        e = {
-          native: e,
-          target: $(e.target),
-          isTrusted: e.isTrusted,
-          preventDefault: e.preventDefault,
-          type: e.type,
-          currentTarget: e.currentTarget && $(e.currentTarget),
-        };
-        boundCallback(e);
+        boundCallback(transformEvent(e));
       },
       options,
       original: callback,
@@ -142,27 +134,40 @@ function trigger(
 ) {
   const { __each } = this;
 
-  const ev = new EventFactory(eventName, options);
+  const ev = EventFactory(eventName, options);
 
   __each((item) => {
     if (callback) {
-      const elementEvents = events.get(item);
+      const elementEvents = events.get(item) || [];
 
-      this.off();
+      if (elementEvents.length) {
+        this.off();
+      }
 
       item.dispatchEvent(ev);
 
-      elementEvents.forEach((ev) =>
-        this.attachEvent(ev.eventName, ev.callback, ev.options)
+      elementEvents.forEach((event) =>
+        this.attachEvent(event.eventName, event.callback, event.options)
       );
 
-      callback(ev);
+      callback.bind($(ev.target))(transformEvent(ev));
     } else if (item[eventName]) {
       item[eventName]();
     } else {
       item.dispatchEvent(ev);
     }
   });
+}
+
+function transformEvent(e) {
+  return {
+    native: e,
+    target: $(e.target),
+    isTrusted: e.isTrusted,
+    preventDefault: e.preventDefault,
+    type: e.type,
+    currentTarget: e.currentTarget && $(e.currentTarget),
+  };
 }
 
 export { attachEvent, trigger, on, off };

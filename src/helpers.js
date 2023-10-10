@@ -1,15 +1,7 @@
-import $ from "./EasyDOM";
 import eventTypes from "./eventTypes";
-import {
-  is,
-  isValidHTMLTag,
-  isSelectorValid,
-  isArrayLike,
-  isSelector,
-} from "./utils";
+import { is, isValidHTMLTag, isSelectorValid, isArrayLike } from "./utils";
 
 const ArgTypes = {
-  CustomSelector: "customSelector",
   Node: "node",
   EasyDOM: "easyDOM",
   Selector: "selector",
@@ -36,8 +28,6 @@ function getContentType(easyDOMArg) {
       return ArgTypes.Selector;
     }
 
-    if (isSelector(easyDOMArg)) return ArgTypes.CustomSelector;
-
     return ArgTypes.HTML;
   }
 }
@@ -49,45 +39,6 @@ const EasyDOMContentTypes = {
 
   selector: (selector, context) => {
     return context.querySelectorAll(selector);
-  },
-
-  customSelector: (selector, context) => {
-    const splitters = [">", "~", "+", ",", " ", ":", ".", "#", "["];
-    const regexp = new RegExp(
-      `(?<=:)(.*?)(?:\\)| (?=(${splitters.join("|\\")})))`,
-      "g"
-    );
-
-    const pseudoSelectors = (selector + " ").match(regexp);
-
-    const customSelectors = pseudoSelectors
-      .filter((pseudoSelector) => {
-        const pseudoSelectorName = pseudoSelector.replace(/\(.*\)/, "");
-        const customSelector = $.customSelectors[pseudoSelectorName];
-
-        if (customSelector) {
-          selector = selector.replace(`:${pseudoSelector}`, "");
-        }
-
-        return customSelector;
-      })
-      .map((customSelector) => {
-        const selectorName = customSelector.replace(/\(.*\)/, "");
-        const args = customSelector.match(/(?<=\()(.*)(?=\))/) || "";
-        return { selectorName, args: args[0].split(",") };
-      });
-
-    let elements = Array.from(
-      document.querySelectorAll(selector.trim(), context)
-    );
-
-    customSelectors.forEach(({ selectorName, args }) => {
-      const customSelectorFunction = $.customSelectors[selectorName](elements);
-
-      elements = customSelectorFunction(...args);
-    });
-
-    return elements.filter(Boolean);
   },
 
   easyDOM: (easyDOMElement) => {
@@ -174,10 +125,6 @@ function getNodeOrFragment(element) {
 }
 
 function create(tag, props = {}, children = []) {
-  if (is(tag, "string")) {
-    tag = tag.replace("<>", "").replace("</>", "");
-  }
-
   if (Array.isArray(tag)) {
     return getNodeOrFragment(createFragment(toNodes(tag)));
   } else if (!isValidHTMLTag(tag)) {

@@ -30,18 +30,23 @@ function formDataToPlain(formData, as = {}) {
   formData = formData instanceof FormData ? formData : new FormData(formData);
   const entries = formData.entries();
   const data = {};
+  let parsedName = name;
+
   Array.from(entries).forEach(([name, value]) => {
-    if (name.includes("[]")) name = name.replace("[]", "");
-    if (as[name]) {
-      as = as[name];
-      if (!(value instanceof as) && !data.hasOwnProperty(name)) {
+    if (name.includes("[]")) {
+      parsedName = name.replace("[]", "");
+    }
+
+    if (as[parsedName]) {
+      as = as[parsedName];
+      if (!(value instanceof as) && !data.hasOwnProperty(parsedName)) {
         value = as(value);
       }
     }
 
-    if (data.hasOwnProperty(name)) {
-      if (Array.isArray(data[name])) data[name].push(value);
-      else data[name] = [data[name], value];
+    if (name.includes("[]")) {
+      if (Array.isArray(data[parsedName])) data[parsedName].push(value);
+      else data[parsedName] = [value];
     } else {
       data[name] = value;
     }
@@ -53,8 +58,8 @@ function formDataToPlain(formData, as = {}) {
 function isValidHTMLTag(tag) {
   try {
     const el = document.createElement(tag);
-    return el.toString() != "[object HTMLUnknownElement]";
-  } catch (e) {
+    return el.toString() !== "[object HTMLUnknownElement]";
+  } catch {
     return false;
   }
 }
@@ -82,33 +87,12 @@ function isEqual(obj, obj1) {
   return true;
 }
 
-function isSelector(selector) {
-  const splitters = [">", "~", "+", ",", " ", ":", ".", "#", "["];
-  const re = new RegExp(`(${splitters.join("|\\")})`);
-  const selectorParts = selector
-    .trim()
-    .split(re)
-    .filter((item) => item !== "")
-    .reduce((prev, curr, index, arr) => {
-      if (splitters.includes(curr)) {
-        prev.push(curr + arr[index + 1] || "");
-      } else if (prev.join("").length < arr.join("").length) {
-        prev.push(curr);
-      }
-
-      return prev;
-    }, []);
-
-  return selectorParts.some(
-    (part) => part[0].match(/(\:|\.|\#|\[)/) || isValidHTMLTag(part)
-  );
-}
-
 function isSelectorValid(selector) {
   try {
-    document.createDocumentFragment().querySelector(selector);
+    const stylesheet = new CSSStyleSheet({ disabled: true });
+    stylesheet.insertRule(`${selector} {}`);
 
-    return isSelector(selector);
+    return !!stylesheet.cssRules.length;
   } catch {
     return false;
   }
@@ -133,7 +117,6 @@ export {
   formDataToPlain,
   isValidHTMLTag,
   isEqual,
-  isSelector,
   isSelectorValid,
   isArrayLike,
 };
